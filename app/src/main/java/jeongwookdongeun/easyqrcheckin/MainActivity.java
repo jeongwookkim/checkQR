@@ -2,12 +2,9 @@ package jeongwookdongeun.easyqrcheckin;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.content.ActivityNotFoundException;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 import android.webkit.CookieManager;
 import android.webkit.CookieSyncManager;
 import android.webkit.URLUtil;
@@ -43,18 +40,22 @@ public class MainActivity extends AppCompatActivity {
         webView.setWebViewClient(new WebViewClient() {
 
             @Override
+            //모든 링크가 WebView내에서 동작하게 함
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
                 //네트워크 url일 경우 -> 네이버 홈 으로 갈 경우 return true, 아니면 return false
                 return URLUtil.isNetworkUrl(url) ? ("https://m.naver.com/".equals(url) ? true : false) : true;
             }
 
             @Override
+            //url 로딩 완료되면 호출 되는 함수
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
 
+                //Webview의 RAM과 영구 저장소 사이에 쿠키를 강제로 동기화 시켜줌 (버전에 따라 선언을 다르게 해줌)
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
                     CookieSyncManager.getInstance().sync();
                 } else {
+                    //롤리팝 이상에서는 CookieManager의 flush를 하도록변경됨
                     CookieManager.getInstance().flush();
                 }
             }
@@ -75,28 +76,19 @@ public class MainActivity extends AppCompatActivity {
         webView.loadUrl("https://nid.naver.com/login/privacyQR");
 
 
-        /* 쿠키 */
+        /* 쿠키 허용 설정 */
         try {
             cookieManager = CookieManager.getInstance();
             cookieManager.setAcceptCookie(true);
-
-            cookie = cookieManager.getCookie("https://nid.naver.com/nidlogin.login?svctype=262144&url=https://nid.naver.com/login/privacyQR");
-
-            //쿠키가 없을 경우
-            if("".equals(cookie) || cookie == null) {
-                if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    webView.getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
-                    cookieManager.setAcceptThirdPartyCookies(webView, true);
-                }
+            if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                webView.getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+                cookieManager.setAcceptThirdPartyCookies(webView, true);
+            }else{
+                CookieSyncManager.createInstance(this);
             }
-            webView.loadUrl("https://nid.naver.com/login/privacyQR"); // 웹뷰에 표시할 웹사이트 주소, 웹뷰 시작
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-
-        /* 재실행 될 때 확인하기 위한 String 저장 */
-        getIntent().setAction("Already created");
 
 
         /* 배너 */
@@ -112,11 +104,18 @@ public class MainActivity extends AppCompatActivity {
         AdView adView = new AdView(this);
         adView.setAdSize(AdSize.BANNER); //광고 사이즈는 배너 사이즈로 설정
         adView.setAdUnitId("ca-app-pub-6854372688341522/4174317953");
+
+        /* 재실행 될 때 확인하기 위한 String 저장 */
+        getIntent().setAction("Already created");
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+
+        if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            CookieSyncManager.getInstance().startSync();
+        }
 
         String action = getIntent().getAction();
         //이미 실행된 적이 있다면 재로드
@@ -126,6 +125,15 @@ public class MainActivity extends AppCompatActivity {
             finish();
         } else
             getIntent().setAction(null);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            CookieSyncManager.getInstance().stopSync();
+        }
     }
 
 }
