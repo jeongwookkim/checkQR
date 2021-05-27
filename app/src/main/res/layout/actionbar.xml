@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/white"
+    android:gravity="center_vertical">
+
+    <ToggleButton
+        android:id="@+id/togle"
+        android:background="@drawable/toggle"
+        android:fontFamily="@font/font"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentLeft="true"
+        android:layout_marginTop="15dp"
+        android:layout_marginBottom="15dp"
+        android:layout_marginLeft="10dp"
+        android:textColor="@color/white"
+        android:textOn="카카오 모드"
+        android:textOff="네이버 모드" />
+
+    <TextView
+        android:id="@+id/title"
+        android:fontFamily="@font/font"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:gravity="center_horizontal"
+        android:layout_toLeftOf="@id/logoutBtn"
+        android:layout_toRightOf="@id/togle"
+        android:text="이지큐알 체크인"
+        android:textColor="@color/black"
+        android:textSize="25sp" />
+
+    <Button
+        android:id="@+id/logoutBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginTop="15dp"
+        android:layout_marginBottom="15dp"
+        android:layout_marginRight="10dp"
+        android:background="@drawable/logout_button"
+        android:fontFamily="@font/font"
+        android:text="로그아웃" />
+
+</RelativeLayout>
