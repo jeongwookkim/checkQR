@@ -37,7 +37,6 @@
     </WebView>
 
 
-
     <com.google.android.gms.ads.AdView
         android:id="@+id/adView"
         android:layout_width="0dp"
@@ -48,9 +47,7 @@
         app:adUnitId="ca-app-pub-6854372688341522/4174317953"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/qrWebView" >
-    </com.google.android.gms.ads.AdView>
+        app:layout_constraintTop_toBottomOf="@id/qrWebView"></com.google.android.gms.ads.AdView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

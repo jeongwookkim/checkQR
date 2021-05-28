@@ -30,6 +30,12 @@ import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.initialization.InitializationStatus;
 import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
+import com.google.android.play.core.appupdate.AppUpdateInfo;
+import com.google.android.play.core.appupdate.AppUpdateManager;
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory;
+import com.google.android.play.core.install.model.AppUpdateType;
+import com.google.android.play.core.install.model.UpdateAvailability;
+import com.google.android.play.core.tasks.Task;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -43,6 +49,9 @@ public class MainActivity extends AppCompatActivity {
     private SharedPreferences preferences;
     private boolean isNaverMode;
     private boolean isClickedKakaoCheckInShortcut;
+
+    private AppUpdateManager appUpdateManager;
+    private int REQUEST_CODE = 366;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -275,6 +284,25 @@ public class MainActivity extends AppCompatActivity {
 
         /* 최초 실행 확인 여부를 위한 String 저장 */
         getIntent().setAction("First created");
+
+
+
+
+        /* 앱 업데이트 */
+        // 앱 업데이트 매니저 초기화
+        appUpdateManager = AppUpdateManagerFactory.create(getApplicationContext());
+
+        // 업데이트를 체크하는데 사용되는 인텐트를 리턴한다.
+        Task<AppUpdateInfo> appUpdateInfoTask = appUpdateManager.getAppUpdateInfo();
+
+        // Checks that the platform will allow the specified type of update.
+        appUpdateInfoTask.addOnSuccessListener(appUpdateInfo -> { // appUpdateManager이 추가되는데 성공하면 발생하는 이벤트
+            if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE // UpdateAvailability.UPDATE_AVAILABLE == 2 이면 앱 true
+                    && appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)) { // 허용된 타입의 앱 업데이트이면 실행 (AppUpdateType.IMMEDIATE || AppUpdateType.FLEXIBLE)
+                // 업데이트가 가능하고, 상위 버전 코드의 앱이 존재하면 업데이트를 실행한다.
+                requestUpdate (appUpdateInfo);
+            }
+        });
     }
 
     @Override
@@ -288,15 +316,27 @@ public class MainActivity extends AppCompatActivity {
         String action = getIntent().getAction();
 
         //이미 실행된 적이 있다면 재로드
-        if (action == null || !action.equals("First created")) {
-            if(isNaverMode) {
+        if(isNaverMode) {
+            if (action == null || !action.equals("First created")) {
                 Intent intent = new Intent(this, MainActivity.class);
                 startActivity(intent);
                 finish();
+            } else {
+                getIntent().setAction(null);
             }
-        } else {
-            getIntent().setAction(null);
         }
+
+        //앱에 설치 대기 중인 업데이트가 있는지 확인
+        appUpdateManager
+                .getAppUpdateInfo()
+                .addOnSuccessListener(
+                        appUpdateInfo -> {
+                            if (appUpdateInfo.updateAvailability()
+                                    == UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS) {
+                                // If an in-app update is already running, resume the update.
+                                requestUpdate(appUpdateInfo);
+                            }
+                        });
     }
 
     @Override
@@ -319,6 +359,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // 카카오 QR 체크인 URL로 이동
     public void moveKakaoQRCheckIn() {
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setData(Uri.parse("kakaotalk://inappbrowser?url=https://accounts.kakao.com/qr_check_in"));
@@ -331,6 +372,53 @@ public class MainActivity extends AppCompatActivity {
             if (webIntent.resolveActivity(getPackageManager()) != null) {
                 Toast.makeText(getApplicationContext(), "카카오톡 앱 설치 및 업데이트, 로그인 후 다시 시도해주세요.", Toast.LENGTH_LONG).show();
                 startActivity(webIntent);
+            }
+        }
+    }
+
+    // 업데이트 요청
+    private void requestUpdate (AppUpdateInfo appUpdateInfo) {
+        try {
+            appUpdateManager.startUpdateFlowForResult(
+                    // 'getAppUpdateInfo()' 에 의해 리턴된 인텐트
+                    appUpdateInfo,
+                    // 'AppUpdateType.FLEXIBLE': 사용자에게 업데이트 여부를 물은 후 업데이트 실행 가능
+                    // 'AppUpdateType.IMMEDIATE': 사용자가 수락해야만 하는 업데이트 창을 보여줌
+                    AppUpdateType.IMMEDIATE,
+                    // 현재 업데이트 요청을 만든 액티비티, 여기선 MainActivity.
+                    this,
+                    // onActivityResult 에서 사용될 REQUEST_CODE.
+                    REQUEST_CODE);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        //onActivityResult() 콜백을 사용해서 업데이트 실패 또는 취소 처리
+        if (requestCode == REQUEST_CODE) {
+            Toast myToast = Toast.makeText(this.getApplicationContext(), "REQUEST_CODE", Toast.LENGTH_SHORT);
+            myToast.show();
+
+            // 업데이트가 성공적으로 끝나지 않은 경우
+            if (resultCode != RESULT_OK) {
+                Toast.makeText(getApplicationContext(), "Update flow failed! Result code: " + resultCode, Toast.LENGTH_LONG).show();
+                // 업데이트가 취소되거나 실패하면 업데이트를 다시 요청할 수 있다.,
+                // 업데이트 타입을 선택한다 (IMMEDIATE || FLEXIBLE).
+                Task<AppUpdateInfo> appUpdateInfoTask = appUpdateManager.getAppUpdateInfo();
+
+                appUpdateInfoTask.addOnSuccessListener(appUpdateInfo -> {
+                    if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
+                            // flexible한 업데이트를 위해서는 AppUpdateType.FLEXIBLE을 사용한다.
+                            && appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)) {
+                        // 업데이트를 다시 요청한다.
+                        requestUpdate(appUpdateInfo);
+                    }
+                });
             }
         }
     }
