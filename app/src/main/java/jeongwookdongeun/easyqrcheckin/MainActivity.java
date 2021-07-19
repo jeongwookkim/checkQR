@@ -10,7 +10,6 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.webkit.CookieManager;
@@ -69,19 +68,19 @@ public class MainActivity extends AppCompatActivity {
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
 
                 //네트워크 url 경우
-                if( URLUtil.isNetworkUrl(url) ) {
+                if (URLUtil.isNetworkUrl(url)) {
                     //네이버 홈으로 가는 경우 true, 아니면 false
                     return "https://m.naver.com/".equals(url) ? true : false;
                 }
 
                 //Intent.ACTION_VIEW 사용으로 핸드폰 기본 웹 브라우저로 검색 된 페이지(현재 URL)가 나옴
-               Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                try{
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                try {
                     startActivity(intent);
-                }catch (ActivityNotFoundException e){
+                } catch (ActivityNotFoundException e) {
                     Intent webIntent = new Intent(Intent.ACTION_VIEW);
                     webIntent.setData(Uri.parse("https://play.google.com/store/apps/details?id=com.nhn.android.search"));
-                    if(webIntent.resolveActivity(getPackageManager()) != null){
+                    if (webIntent.resolveActivity(getPackageManager()) != null) {
                         Toast.makeText(getApplicationContext(), "네이버 앱 설치 및 업데이트, 로그인 후 다시 시도해주세요.", Toast.LENGTH_LONG).show();
                         startActivity(webIntent);
                     }
@@ -179,7 +178,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 
-                        if(isChecked){ //토글이 ON일 때
+                        if (isChecked) { //토글이 ON일 때
 
                             webView.setVisibility(View.INVISIBLE);
                             findViewById(R.id.logoutBtn).setVisibility(View.INVISIBLE);
@@ -218,7 +217,7 @@ public class MainActivity extends AppCompatActivity {
 
         /* 카카오 QR 바로가기 버튼 */
         Button kakaoqrBtn = (Button) findViewById(R.id.kakaoqrBtn);
-        kakaoqrBtn.setOnClickListener(new Button.OnClickListener(){
+        kakaoqrBtn.setOnClickListener(new Button.OnClickListener() {
 
             @Override
             public void onClick(View v) {
@@ -237,7 +236,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         /* 카카오 모드이고 체크인 바로가기 버튼을 이미 한번 눌렀을 경우 (KAKAO_SHORTCUT가 true로 저장된 경우) */
-        if(!isNaverMode && isClickedKakaoCheckInShortcut) {
+        if (!isNaverMode && isClickedKakaoCheckInShortcut) {
             moveKakaoQRCheckIn();
         }
 
@@ -245,7 +244,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         /* 로그아웃 버튼 */
-        Button logoutBtn = (Button) findViewById(R.id.logoutBtn) ;
+        Button logoutBtn = (Button) findViewById(R.id.logoutBtn);
         logoutBtn.setOnClickListener(new Button.OnClickListener() {
 
             @Override
@@ -300,7 +299,7 @@ public class MainActivity extends AppCompatActivity {
             if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE // UpdateAvailability.UPDATE_AVAILABLE == 2 이면 앱 true
                     && appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)) { // 허용된 타입의 앱 업데이트이면 실행 (AppUpdateType.IMMEDIATE || AppUpdateType.FLEXIBLE)
                 // 업데이트가 가능하고, 상위 버전 코드의 앱이 존재하면 업데이트를 실행한다.
-                requestUpdate (appUpdateInfo);
+                requestUpdate(appUpdateInfo);
             }
         });
     }
@@ -316,7 +315,7 @@ public class MainActivity extends AppCompatActivity {
         String action = getIntent().getAction();
 
         //이미 실행된 적이 있다면 재로드
-        if(isNaverMode) {
+        if (isNaverMode) {
             if (action == null || !action.equals("First created")) {
                 Intent intent = new Intent(this, MainActivity.class);
                 startActivity(intent);
@@ -352,7 +351,7 @@ public class MainActivity extends AppCompatActivity {
     public void onBackPressed() {
         super.onBackPressed();
         /* 카카오 모드인 경우 뒤로 가기 버튼을 눌렀을 때 KAKAO_SHORTCUT false로 초기화 */
-        if(!isNaverMode) {
+        if (!isNaverMode) {
             SharedPreferences.Editor editor = preferences.edit();
             editor.putBoolean("KAKAO_SHORTCUT", false);
             editor.commit();
@@ -364,9 +363,9 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setData(Uri.parse("kakaotalk://inappbrowser?url=https://accounts.kakao.com/qr_check_in"));
 
-        try{
+        try {
             startActivity(intent);
-        }catch (ActivityNotFoundException e) {
+        } catch (ActivityNotFoundException e) {
             Intent webIntent = new Intent(Intent.ACTION_VIEW);
             webIntent.setData(Uri.parse("https://play.google.com/store/apps/details?id=com.kakao.talk"));
             if (webIntent.resolveActivity(getPackageManager()) != null) {
@@ -377,7 +376,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // 업데이트 요청
-    private void requestUpdate (AppUpdateInfo appUpdateInfo) {
+    private void requestUpdate(AppUpdateInfo appUpdateInfo) {
         try {
             appUpdateManager.startUpdateFlowForResult(
                     // 'getAppUpdateInfo()' 에 의해 리턴된 인텐트
@@ -389,8 +388,7 @@ public class MainActivity extends AppCompatActivity {
                     this,
                     // onActivityResult 에서 사용될 REQUEST_CODE.
                     REQUEST_CODE);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -401,8 +399,7 @@ public class MainActivity extends AppCompatActivity {
 
         //onActivityResult() 콜백을 사용해서 업데이트 실패 또는 취소 처리
         if (requestCode == REQUEST_CODE) {
-            Toast myToast = Toast.makeText(this.getApplicationContext(), "REQUEST_CODE", Toast.LENGTH_SHORT);
-            myToast.show();
+            Toast.makeText(getApplicationContext(), "REQUEST_CODE", Toast.LENGTH_SHORT).show();
 
             // 업데이트가 성공적으로 끝나지 않은 경우
             if (resultCode != RESULT_OK) {
